@@ -1,0 +1,80 @@
+import numpy as np
+import pandas as pd
+
+URL = (
+    "https://raw.githubusercontent.com/DataTalksClub/machine-learning-zoomcamp/"
+    "main/cohorts/2026/data/car_fuel_efficiency_2026.csv"
+)
+ORIGIN = "Asia"
+N_ROWS = 7
+Y = np.array([1100, 1300, 800, 900, 1000, 1100, 1200])
+
+
+def load_data(url: str = URL) -> pd.DataFrame:
+    """Load the car fuel efficiency dataset."""
+    return pd.read_csv(url)
+
+
+def count_records(df: pd.DataFrame) -> int:
+    """Number of records (rows)."""
+    return len(df)
+
+
+def count_fuel_types(df: pd.DataFrame) -> int:
+    """Number of unique fuel types."""
+    return df["fuel_type"].nunique()
+
+
+def count_columns_with_missing(df: pd.DataFrame) -> int:
+    """Number of columns that contain at least one missing value."""
+    return int((df.isna().sum() > 0).sum())
+
+
+def get_max_efficiency(df: pd.DataFrame, origin: str = ORIGIN) -> float:
+    """Maximum fuel efficiency (mpg) among cars from the given origin."""
+    return df.loc[df["origin"] == origin, "fuel_efficiency_mpg"].max()
+
+
+def horsepower_median_change(df: pd.DataFrame) -> tuple[float, float]:
+    """Median horsepower before and after filling NaNs with the most frequent value."""
+    horsepower = df["horsepower"]
+    most_frequent = horsepower.mode()[0]
+    return horsepower.median(), horsepower.fillna(most_frequent).median()
+
+
+def sum_of_weights(df: pd.DataFrame, y: np.ndarray = Y) -> float:
+    """Linear regression via the normal equation: w = inv(X'X) X' y; return sum(w)."""
+    X = (
+        df.loc[df["origin"] == ORIGIN, ["vehicle_weight", "model_year"]]
+        .head(N_ROWS)
+        .to_numpy()
+    )
+    w = np.linalg.inv(X.T @ X) @ X.T @ y
+    return w.sum()
+
+
+if __name__ == "__main__":
+    print(f"pandas version: {pd.__version__}")
+
+    df = load_data()
+    print(f"Shape: {df.shape}")
+    print(df.head().to_string())
+
+    print("\n=== Q2: Records count ===")
+    print(count_records(df))  # 10000
+
+    print("\n=== Q3: Fuel types ===")
+    print(count_fuel_types(df))  # 3
+
+    print("\n=== Q4: Columns with missing values ===")
+    print(count_columns_with_missing(df))  # 2
+
+    print("\n=== Q5: Max fuel efficiency (Asia) ===")
+    print(get_max_efficiency(df))  # 41.2
+
+    print("\n=== Q6: Median horsepower ===")
+    before, after = horsepower_median_change(df)
+    print(f"Before: {before}  After: {after}")  # 254.0 -> 252.0 (decreased)
+
+    print("\n=== Q7: Sum of weights ===")
+    print(round(sum_of_weights(df), 4))  # 0.3692
